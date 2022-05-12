@@ -1,0 +1,84 @@
+#include "stm8s.h"
+#include "milis.h"
+
+void init_pwm(void);
+void process_pwm_change(void);
+
+static uint16_t duty_cycle=0; // aktuální střída
+static uint16_t light=800;  
+uint8_t x=0; 
+
+void main(void){
+CLK_HSIPrescalerConfig(CLK_PRESCALER_HSIDIV1); 
+init_milis(); 
+GPIO_Init(GPIOD, GPIO_PIN_4, GPIO_MODE_OUT_PP_LOW_SLOW);
+GPIO_Init(GPIOD, GPIO_PIN_3, GPIO_MODE_OUT_PP_LOW_SLOW);
+GPIO_Init(GPIOE, GPIO_PIN_4,GPIO_MODE_IN_FL_NO_IT);
+init_pwm(); 
+
+  while (1){
+		if(GPIO_ReadInputPin(GPIOE,GPIO_PIN_4)== RESET && x==0){
+			x=1;
+			duty_cycle=duty_cycle + 50;
+			light=light - 50;
+			if(duty_cycle >= 800){duty_cycle=0;}
+			if(light <= 0){light=800;}
+		}
+		if(GPIO_ReadInputPin(GPIOE,GPIO_PIN_4)!= RESET){x=0;}
+	TIM2_SetCompare1(light); 
+	TIM2_SetCompare2(duty_cycle); 
+	
+	}
+}
+				
+  
+
+
+void init_pwm(void){
+TIM2_TimeBaseInit(TIM2_PRESCALER_1,1500-1);
+TIM2_OC1Init( 	
+	TIM2_OCMODE_PWM1, 			
+	TIM2_OUTPUTSTATE_ENABLE,
+	0,										
+	TIM2_OCPOLARITY_HIGH
+	);
+
+TIM2_OC2Init( 	
+	TIM2_OCMODE_PWM1, 			
+	TIM2_OUTPUTSTATE_ENABLE,
+	0,										
+	TIM2_OCPOLARITY_HIGH	
+	);
+	
+	
+TIM2_OC1PreloadConfig(ENABLE);	
+TIM2_OC2PreloadConfig(ENABLE);
+TIM2_Cmd(ENABLE);
+}
+
+
+
+// pod tímto komentářem nic neměňte 
+#ifdef USE_FULL_ASSERT
+
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *   where the assert_param error has occurred.
+  * @param file: pointer to the source file name
+  * @param line: assert_param error line source number
+  * @retval : None
+  */
+void assert_failed(u8* file, u32 line)
+{ 
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+  /* Infinite loop */
+  while (1)
+  {
+  }
+}
+#endif
+
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
